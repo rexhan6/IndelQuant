@@ -1,5 +1,7 @@
 #!/bin/sh
 
+source ~/anaconda3/etc/profile.d/conda.sh
+
 conda activate py38-rex
 
 echo "the little bash start!"
@@ -30,7 +32,7 @@ for i in A B C D E F;
 echo "now clean up"
 
 rm -f *.settings
-rm -f *unidentified*
+#rm -f *unidentified*
 rm -f *rev*
 find . -name "*" -type f -size 0c | xargs -n 1 rm -f
 
