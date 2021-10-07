@@ -13,7 +13,7 @@ create an env
 install adapterremoval and crispresso2  
 
 ### demux-comb-cr.sh
-use adapterremoval to split data
+use adapterremoval to split data  
 use crispresso2 to analyse the data
 
 ## based on 
