@@ -6,6 +6,16 @@ identify crispr-induced mutations
 calculate modefied rate  
 visualize the statistic data  
 
+## manual
+### installenv.sh
+install miniconda3  
+create an env  
+install adapterremoval and crispresso2  
+
+### demux-comb-cr.sh
+use adapterremoval to split data
+use crispresso2 to analyse the data
+
 ## based on 
 adapterremoval  
 crispresso2
