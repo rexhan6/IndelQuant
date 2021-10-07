@@ -1,8 +1,7 @@
 #!/bin/sh
 
-source ~/anaconda3/etc/profile.d/conda.sh
-
-conda activate py38-rex
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate crispranalysis
 
 echo "the little bash start!"
 
