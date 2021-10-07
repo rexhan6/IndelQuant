@@ -10,7 +10,9 @@ AdapterRemoval --file1 R1.fq.gz --file2 R2.fq.gz --barcode-list barcodenova.txt 
 
 echo "now adapterremoval 2"
 
-AdapterRemoval --file1 R2.fq.gz --file2 R1.fq.gz --barcode-list barcodenova.txt --demultiplex-only --basename rev
+#AdapterRemoval --file1 R2.fq.gz --file2 R1.fq.gz --barcode-list barcodenova.txt --demultiplex-only --basename rev
+
+AdapterRemoval --file1 fwd.unidentified_2.fastq --file2 fwd.unidentified_1.fastq --barcode-list barcodenova.txt --demultiplex-only --basename rev
 
 echo "now combine fwd and rev"
 
