@@ -1,4 +1,4 @@
-# crispranalysis shell script v1.0 beta
+# crispranalysis shell script
 
 ## function
 analyse amplicon sequencing data  
