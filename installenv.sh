@@ -12,5 +12,5 @@ conda create -n crispranalysis python=3.8
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate crispranalysis
 
-conda install AdapterRemoval
-conda install CRISPResso2
+conda install -c bioconda adapterremoval
+conda install -c bioconda CRISPResso2
