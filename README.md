@@ -133,17 +133,15 @@ If fastp is used, cite the fastp publication recommended by the fastp project.
 
 ## License And Third-Party Tools
 
-IndelQuant is a GUI wrapper and workflow coordinator. It does not claim ownership of AdapterRemoval, CRISPResso2, or fastp.
+IndelQuant is released under the Apache License 2.0.
 
-Recommended license for this repository: Apache License 2.0, provided that the repository contains only IndelQuant source code and does not redistribute CRISPResso2, AdapterRemoval, or fastp binaries/source code.
-
-Important third-party license notes:
+IndelQuant is a GUI wrapper and workflow coordinator. AdapterRemoval, CRISPResso2, and fastp are third-party tools and are not redistributed as part of this source repository. Users are responsible for installing and using these tools under their respective license terms.
 
 - CRISPResso2 is distributed under its own EULA for academic/non-commercial research use and should not be redistributed with this repository unless you have permission from the CRISPResso2 rights holder.
 - AdapterRemoval v3 is GPL-3.0 licensed. If you redistribute AdapterRemoval itself or bundle it into a release, you must comply with GPL-3.0.
 - fastp is MIT licensed.
 
-For the cleanest GitHub release, publish only the IndelQuant source code and installation instructions. Ask users to install AdapterRemoval, CRISPResso2, and fastp separately through conda or pip.
+See `THIRD_PARTY_NOTICES.md` for additional third-party license notes.
 
 ## Disclaimer
 

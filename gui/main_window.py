@@ -82,6 +82,12 @@ def _get_app_dir():
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def _resource_path(relative_path):
+    """Return a bundled resource path for source and PyInstaller builds."""
+    base_dir = getattr(sys, '_MEIPASS', _get_app_dir())
+    return os.path.join(base_dir, relative_path)
+
+
 class MainWindow:
     def __init__(self):
         self.root = ctk.CTk()
@@ -90,6 +96,7 @@ class MainWindow:
         self.root.title(f'{APP_NAME} v{VERSION}')
         self.root.geometry('1200x800')
         self.root.minsize(1000, 650)
+        self._set_window_icon()
 
         # Configuration path works in source and packaged builds.
         self.config_path = os.path.join(_get_app_dir(), 'config.json')
@@ -156,6 +163,16 @@ class MainWindow:
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About', command=self._show_about)
         menubar.add_cascade(label='Help', menu=help_menu)
+
+    def _set_window_icon(self):
+        """Set the application window icon when the icon resource is available."""
+        icon_path = _resource_path(os.path.join('assets', 'IndelQuant.ico'))
+        if not os.path.exists(icon_path):
+            return
+        try:
+            self.root.iconbitmap(icon_path)
+        except Exception:
+            log.debug('Failed to set window icon', exc_info=True)
 
     def _show_about(self):
         """Show the About dialog."""
