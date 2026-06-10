@@ -1,0 +1,225 @@
+CRISPR Analysis GUI - 开发记录
+================================
+
+日期：2026年5月9日
+作者：Rex Han
+版本：0.0.1beta
+
+
+一、项目背景
+============
+
+用户是一名生物信息学研究人员，原本使用 shell 脚本进行 CRISPR 基因编辑效率分析。
+原始脚本基于 AdapterRemoval 和 CRISPResso2 两个工具，通过命令行手动运行。
+为了降低使用门槛，用户希望开发一个图形化界面（GUI）软件。
+
+
+二、开发时间线
+==============
+
+【阶段一：需求理解与原型设计】
+- 学习用户原始 shell 脚本（demux-comb-cr.sh）
+- 了解 AdapterRemoval 和 CRISPResso2 的功能和参数
+- 设计 GUI 原型：7个Tab页面
+  1. 环境配置
+  2. AdapterRemoval 参数
+  3. CRISPResso2 参数
+  4. 样本管理
+  5. 运行与结果
+  6. 设置
+  7. 关于
+
+【阶段二：GUI 框架选择】
+- 最初使用 tkinter（Python 内置）
+- 发现界面不够美观，改用 customtkinter
+- customtkinter 提供了更现代的外观（圆角、阴影、深色主题）
+
+【阶段三：核心功能实现】
+- AdapterRemoval 调用模块：barcode 拆分、正反向合并
+- CRISPResso2 调用模块：基因编辑效率分析
+- 结果解析模块：量化文件解析、汇总 CSV 生成
+- 样本管理：Treeview 表格、复选框选择
+
+【阶段四：问题解决与优化】
+- numpy 兼容性问题：替换 C 扩展为纯 Python 实现
+- fastp 集成问题：实现自定义 fastp 替代方案
+- 路径空格问题：添加引号处理
+- 进程终止问题：实现三重终止机制
+- UI 响应问题：使用多线程避免卡死
+
+【阶段五：打包与分发】
+- 使用 PyInstaller 打包为单个 EXE 文件
+- 解决 Tcl/Tk 版本冲突问题
+- 最终生成 79MB 的可执行文件
+
+
+三、关键问题与解决方案
+======================
+
+1. 【numpy 兼容性问题】
+   问题：CRISPResso2 的 C 扩展与 numpy 2.x 不兼容
+   错误：Buffer dtype mismatch, expected 'DTYPE_LONG' but got 'long long'
+   解决：替换 C 扩展为纯 Python 实现
+   文件：CRISPResso2Align.py, CRISPRessoCOREResources.py
+
+2. 【fastp 集成问题】
+   问题：fastp 命令在 Windows 上无法正常工作
+   解决：实现自定义 fastp 替代方案
+   文件：core/crispresso_runner.py
+
+3. 【路径空格问题】
+   问题：Windows 路径包含空格时命令执行失败
+   解决：为所有路径添加引号
+   示例：cmd = f'"{exe}" -r1 "{r1}" -a {seq}'
+
+4. 【进程终止问题】
+   问题：点击停止按钮无法立即终止 CRISPResso2
+   解决：实现三重终止机制
+   方法：terminate() → kill() → taskkill
+
+5. 【Tcl/Tk 版本冲突】
+   问题：EXE 打包后运行报错 init.tcl 版本不匹配
+   解决：修改 init.tcl 版本要求，或包含正确的 Tcl 数据文件
+
+6. 【UI 响应问题】
+   问题：长时间操作时界面卡死
+   解决：使用 threading 实现后台运行
+
+
+四、技术栈
+==========
+
+编程语言：Python 3.10.20
+GUI 框架：customtkinter 5.2.2
+图表库：matplotlib 3.10.9
+数据处理：numpy 1.24.0, pandas 3.0.2
+Excel 支持：openpyxl 3.1.5
+打包工具：PyInstaller
+
+外部工具：
+- AdapterRemoval v3.0.0（barcode 拆分）
+- CRISPResso2 v2.3.4（基因编辑效率分析）
+- fastp（reads 修剪，已内置在 CRISPResso2 中）
+
+环境管理：
+- Miniconda3
+- conda 环境：crispranalysis
+
+
+五、项目结构
+============
+
+F:\Cherryclaw\crispr_analysis_gui\
+├── main.py                    # 入口文件
+├── run.bat                    # Python 运行脚本
+├── run_exe.bat                # EXE 运行脚本
+├── crispranalysis_env.bat     # 环境激活脚本
+├── build.py                   # EXE 打包脚本
+├── config.json                # 用户配置文件
+├── requirements.txt           # Python 依赖
+├── 开发总结.txt               # 本文档
+│
+├── dist/
+│   └── CRISPR_Analysis.exe    # 打包后的 EXE（79MB）
+│
+├── config/
+│   └── config_manager.py      # 配置文件管理（JSON读写、历史记录）
+│
+├── core/
+│   ├── adapter_runner.py      # AdapterRemoval 调用
+│   ├── crispresso_runner.py   # CRISPResso2 调用
+│   └── result_parser.py       # 结果解析
+│
+├── gui/
+│   ├── styles.py              # 样式定义（颜色、字体）
+│   ├── main_window.py         # 主窗口（导航、页面切换）
+│   ├── params_panel.py        # 参数面板（AdapterRemoval、CRISPResso2）
+│   ├── log_panel.py           # 日志面板（实时输出）
+│   └── result_panel.py        # 结果面板（图表、表格）
+│
+└── utils/
+    ├── system.py              # 系统工具（CPU检测、文件查找）
+    └── env_checker.py         # 环境检测（conda、工具检查）
+
+
+六、功能特性
+============
+
+1. 【AdapterRemoval 模块】
+   - 输入：R1/R2 FASTQ 文件、Barcode 表
+   - 输出：按样本拆分的 FASTQ 文件
+   - 流程：正向拆分 → 反向拆分 → 合并 → 拼接 → 清理
+   - 特点：支持任意文件名、自适应线程数
+
+2. 【CRISPResso2 模块】
+   - 输入：合并后的 FASTQ 文件、Amplicon 序列、sgRNA 序列
+   - 输出：编辑效率量化结果
+   - 参数：定量窗口、碱基编辑、先导编辑、HDR 等
+   - 特点：自动设置参数、支持多种编辑工具
+
+3. 【结果展示模块】
+   - 表格：样本名、状态、Reads、Modified%、Unmodified%
+   - 图表：柱状图（编辑效率）、饼图（平均编辑率）
+   - 交互：点击表格行显示详情、多选对比
+
+4. 【环境管理模块】
+   - 自动检测 Conda、AdapterRemoval、CRISPResso2
+   - 一键安装依赖
+   - 环境状态实时显示
+
+5. 【配置管理模块】
+   - JSON 配置文件
+   - 历史记录（自动保存上次输入）
+   - 参数预设
+
+
+七、使用说明
+============
+
+1. 【首次使用】
+   - 运行 run.bat 或 CRISPR_Analysis.exe
+   - 进入"设置"页面
+   - 配置工作目录
+   - 配置 Conda 路径
+   - 点击"检测环境"确认工具可用
+
+2. 【运行分析】
+   - 在 AdapterRemoval 页面配置输入文件和参数
+   - 在 CRISPResso2 页面配置序列和参数
+   - 进入"运行与结果"页面
+   - 点击"运行全部"或分步运行
+
+3. 【查看结果】
+   - 表格显示每个样本的状态和编辑效率
+   - 点击样本行查看详细信息
+   - 图表显示编辑效率对比
+   - 可导出 CSV 文件
+
+
+八、已知问题
+============
+
+1. 拖拽功能受限（tkinterdnd2 与 customtkinter 不兼容）
+2. 部分高级参数未暴露在界面中
+3. 大数据集处理时间较长
+4. EXE 文件体积较大（~80MB）
+
+
+九、后续计划
+============
+
+1. 优化 UI 响应速度
+2. 添加更多图表类型
+3. 支持批量处理
+4. 添加数据导出功能
+5. 集成更多分析工具
+
+
+十、开发心得
+============
+
+1. 理解用户工作流程是关键
+2. 先实现核心功能，再逐步完善
+3. 及时响应用户反馈，快速迭代
+4. 详细注释和文档有助于维护
+5. 跨平台开发需要注意兼容性问题

@@ -1,0 +1,333 @@
+CRISPR Analysis GUI - 完整开发日志与技术方案
+================================================
+
+日期：2026年5月10日
+作者：Rex Han
+版本：0.0.1beta
+
+
+一、项目概述
+============
+
+基于 AdapterRemoval v3 + CRISPResso2 的 CRISPR 基因编辑效率分析 GUI 工具。
+目标：将命令行工具封装为图形界面，降低使用门槛。
+
+
+二、技术栈
+==========
+
+- Python 3.10.20 (crispranalysis conda 环境)
+- GUI: customtkinter 5.2.2 (基于 tkinter，现代外观)
+- 拖拽: windnd 1.0.7 (Windows 文件拖拽)
+- 图表: matplotlib 3.10.9
+- 数据: numpy 1.24.0, pandas 3.0.2
+- 打包: PyInstaller 6.20.0
+
+外部工具：
+- AdapterRemoval v3.0.0 (barcode 拆分)
+- CRISPResso2 v2.3.4 (基因编辑效率分析)
+- fastp (reads 修剪，Python 模拟实现)
+
+
+三、项目结构
+============
+
+F:\Cherryclaw\crispr_analysis_gui\
+├── main.py                    # 入口
+├── run.bat                    # Python 运行
+├── run_exe.bat                # EXE 运行
+├── build.py                   # EXE 打包脚本
+├── config.json                # 用户配置（含历史记录）
+├── 开发日志.txt               # 本文档
+│
+├── dist/
+│   └── CRISPR_Analysis.exe    # 打包后的 EXE (79MB)
+│
+├── config/
+│   └── config_manager.py      # 配置管理（JSON读写、历史记录）
+│
+├── core/
+│   ├── adapter_runner.py      # AdapterRemoval 流程
+│   ├── crispresso_runner.py   # CRISPResso2 调用
+│   └── result_parser.py       # 结果解析
+│
+├── gui/
+│   ├── styles.py              # 样式定义（颜色、字体）
+│   ├── main_window.py         # 主窗口（导航、页面切换）
+│   ├── params_panel.py        # 参数面板（含拖拽支持）
+│   ├── log_panel.py           # 日志面板
+│   └── result_panel.py        # 结果面板（图表）
+│
+└── utils/
+    ├── system.py              # 系统工具（CPU检测）
+    └── env_checker.py         # 环境检测
+
+
+四、核心工作流程
+================
+
+1. AdapterRemoval 流程：
+   Step 1: 正向拆分 - R1/R2 -> fwd.*.r1.fastq, fwd.*.r2.fastq
+   Step 2: 反向拆分 - unidentified -> rev.*.r1.fastq, rev.*.r2.fastq
+   Step 3: 合并正反向 - cat rev -> fwd
+   Step 4: 清理临时文件
+
+   关键参数：
+   --in-file1, --in-file2: 输入文件
+   --barcode-table: Barcode 表
+   --out-prefix: 输出前缀
+   --demultiplex-only: 仅拆分模式
+   --out-format fastq: 输出格式
+
+2. CRISPResso2 流程：
+   - 输入：合并后的 FASTQ 文件、Amplicon 序列、sgRNA 序列
+   - 内部使用 fastp 进行修剪和合并
+   - 输出：编辑效率量化结果
+
+   关键参数：
+   -r1: R1 文件（单端模式）
+   -a: Amplicon 序列
+   -g: sgRNA 序列
+   -o: 输出目录
+   -n: 样本名称
+   -wc: 定量窗口中心（Cas9=-3）
+   -w: 定量窗口大小
+   -p: 进程数
+   --ignore_substitutions: 忽略替换
+   --plot_histogram_outliers: 直方图排除离群值
+
+
+五、遇到的问题与解决方案
+========================
+
+1. 【numpy 兼容性问题】
+   问题：CRISPResso2 的 C 扩展与 numpy 2.x 不兼容
+   错误：Buffer dtype mismatch, expected 'DTYPE_LONG' but got 'long long'
+   解决：替换 C 扩展为纯 Python 实现
+   文件：CRISPResso2Align.py, CRISPRessoCOREResources.py
+
+2. 【fastp 问题】
+   问题：fastp 没有 Windows 版本
+   解决：创建 Python 模拟实现
+   文件：Scripts/fastp.py + fastp.bat
+
+3. 【Tcl/Tk 版本冲突】
+   问题：EXE 打包后运行报错 init.tcl 版本不匹配
+   解决：修改 init.tcl 版本要求，或包含正确的数据文件
+
+4. 【路径空格问题】
+   问题：Windows 路径包含空格时命令执行失败
+   解决：为所有路径添加引号
+
+5. 【进程终止问题】
+   问题：点击停止按钮无法立即终止
+   解决：三重终止机制 - terminate → kill → taskkill
+
+6. 【中文路径编码】
+   问题：拖拽中文路径时报 UTF-8 错误
+   解决：尝试多种编码（utf-8, gbk, gb2312, cp936）
+
+
+六、用户交互功能
+================
+
+1. 文件拖拽
+   - 使用 windnd 库实现
+   - 支持 R1/R2/Barcode 输入框
+   - 自动识别中文路径编码
+
+2. 参数联动
+   - 选择编辑工具后自动更新定量窗口参数
+   - Cas9: center=-3, size=1
+   - Cpf1: center=+1, size=1
+   - Base editors: center=-10, size=10
+   - Prime editors: center=-3, size=1
+
+3. 样本管理
+   - 自动识别拆分后的样本
+   - 支持全选/全不选
+   - 实时显示处理状态
+   - 完成后显示结果
+
+4. 历史记录
+   - 自动保存用户输入的参数
+   - 下次启动自动填入
+   - 保存在 config.json 的 history 字段
+
+5. 可视化
+   - 柱状图：每个样本的编辑效率
+   - 饼图：平均编辑率
+   - 表格：样本状态和结果
+
+
+七、关键代码说明
+================
+
+1. adapter_runner.py
+   - run_adapterremoval(): 主流程函数
+   - 支持正反向拆分、合并、清理
+   - 路径引号处理解决空格问题
+
+2. crispresso_runner.py
+   - run_crispresso(): 调用 CRISPResso2
+   - terminate_current(): 终止进程
+   - 三重终止机制确保进程被杀掉
+
+3. params_panel.py
+   - DropEntry: 支持拖拽的输入框
+   - Section: 可折叠分组
+   - 参数联动逻辑
+
+4. main_window.py
+   - 页面切换（侧边栏导航）
+   - 后台线程执行分析
+   - 样本状态实时更新
+   - 进度条和 ETA 显示
+
+
+八、配置文件格式 (config.json)
+==============================
+
+{
+  "adapter_removal": {
+    "file1": "",
+    "file2": "",
+    "barcode_file": "",
+    "basename": "demux"
+  },
+  "crispresso": {
+    "amplicon_seq": "",
+    "guide_seq": "",
+    "output_dir": "./results"
+  },
+  "workdir": "",
+  "history": {
+    "amplicon_seq": ["序列1", ...],
+    "guide_seq": ["序列1", ...],
+    "r1": ["路径1", ...],
+    "r2": ["路径1", ...],
+    "barcode_file": ["路径1", ...]
+  }
+}
+
+
+九、Barcode 文件格式
+====================
+
+TSV 文件，两列：
+第一列：样本名
+第二列：barcode 序列
+
+示例：
+A1	ATCACGTGC
+A2	CTGATCGTA
+B1	AGAGTCACT
+B2	TAGAGCTAG
+
+
+十、运行命令示例
+================
+
+AdapterRemoval:
+adapterremoval3 \
+  --in-file1 R1.fq.gz \
+  --in-file2 R2.fq.gz \
+  --barcode-table barcodes.txt \
+  --out-prefix demux \
+  --demultiplex-only \
+  --out-format fastq \
+  --threads 12
+
+CRISPResso2:
+CRISPResso \
+  -r1 demux.A1.r1.fastq \
+  -r2 demux.A1.r2.fastq \
+  -a <amplicon_sequence> \
+  -g <sgRNA_sequence> \
+  -o ./results \
+  -n A1 \
+  -wc -3 -w 1 \
+  -p 12 \
+  --ignore_substitutions \
+  --plot_histogram_outliers \
+  --min_frequency_alleles_around_cut_to_plot 0.01
+
+
+十一、未来改进方向
+==================
+
+1. 性能优化
+   - 使用 C 扩展加速对齐算法
+   - 并行处理多个样本
+
+2. 功能扩展
+   - 支持 CRISPRessoBatch 批量分析
+   - 支持 CRISPRessoPooled 多重扩增子
+   - 集成更多可视化类型
+
+3. UI 改进
+   - Web 版本（Flask + HTML/CSS/JS）
+   - 支持 macOS 和 Linux
+   - 国际化支持
+
+4. 数据导出
+   - Excel 报告
+   - PDF 报告
+   - 图片导出
+
+
+十二、环境配置命令
+==================
+
+# 创建环境
+conda create -n crispranalysis python=3.10 -y
+
+# 激活环境
+conda activate crispranalysis
+
+# 安装依赖
+pip install customtkinter matplotlib numpy pandas openpyxl windnd
+
+# 安装 AdapterRemoval (Windows)
+# 下载: https://github.com/MikkelSchubert/adapterremoval/releases
+# 解压到 Scripts 目录
+
+# 安装 CRISPResso2
+pip install CRISPResso2
+
+# 打包 EXE
+python build.py
+
+
+十三、开发经验总结
+==================
+
+1. 理解用户工作流程是关键
+   - 用户的 shell 脚本是最佳参考
+   - 理解生物信息学工具的参数含义
+
+2. 跨平台兼容性
+   - Windows 路径空格问题
+   - 中文路径编码问题
+   - Tcl/Tk 版本兼容性
+
+3. 进程管理
+   - 使用 Popen 而非 run 支持终止
+   - 三重终止机制确保进程被杀掉
+
+4. 用户体验
+   - 参数联动减少用户输入
+   - 历史记录避免重复输入
+   - 进度条和 ETA 提供反馈
+
+5. 代码质量
+   - 模块化设计便于维护
+   - 详细注释便于理解
+   - 错误处理提高健壮性
+
+
+十四、联系方式
+==============
+
+作者：Rex Han
+GitHub：https://github.com/rexhancx/crispranalysis

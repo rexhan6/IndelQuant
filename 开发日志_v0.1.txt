@@ -1,0 +1,75 @@
+CRISPR Analysis GUI v0.1 - 革新记录
+====================================
+
+日期：2026-06-09
+目标：提高 CRISPResso2 功能覆盖、稳定性、速度和依赖兼容性，并重排界面。
+
+一、官方工具研究摘要
+====================
+
+1. AdapterRemoval v3
+- 官方 manpage 显示其不仅支持 adapter trimming、paired-end merge 和 demultiplex，
+  还支持质量修剪、长度/N/平均质量过滤、SIMD、线程、HTML/JSON 报告。
+- v0.1 将 AdapterRemoval 参数分为输入、Barcode 拆分、质量过滤、性能日志、高级参数。
+
+2. CRISPResso2
+- 官方参数页显示 Core/Batch/Pooled/WGS/Compare 共用大量参数。
+- v0.1 优先覆盖 Core 单样本批处理的主要参数：多 amplicon/guide、amplicon/guide name、
+  定量窗口、HDR、Base editor、Prime editor、最低比对分数、边缘排除、质量过滤、
+  ambiguous alignment、报告和输出控制。
+- Batch/Pooled/WGS/Compare 暂未直接执行，避免在 GUI 内部伪造不完整流程。
+
+3. fastp
+- 官方 README 显示 fastp 覆盖 FASTQ QC、adapter trimming、质量/长度过滤、polyG/polyX、
+  UMI、dedup、overrepresented sequence、HTML/JSON 报告等。
+- v0.1 将 fastp 作为可选预处理/QC 阶段，默认关闭以保留旧流程兼容性。
+
+二、主要代码改动
+================
+
+1. 新增 core/command_utils.py
+- 集中处理 Windows 命令行引用、额外参数解析。
+- 减少含空格路径和手写额外参数导致的命令构造错误。
+
+2. 新增 core/fastp_runner.py
+- 可对每个 merged FASTQ 生成 clean FASTQ。
+- 同时输出 fastp HTML/JSON 报告。
+- 支持线程、质量、长度、N、滑窗、polyG/polyX、duplication 相关参数。
+
+3. 重写 gui/params_panel.py
+- 从工具堆叠式参数页改为工作流分组。
+- AdapterRemoval 与 CRISPResso2 参数覆盖范围显著扩大。
+- fastp 作为可选 QC/预处理区块集成。
+
+4. 修改 core/crispresso_runner.py
+- 修复 _current_process 未声明 global 导致停止按钮无法可靠终止 CRISPResso2 的问题。
+- 使用统一命令构造工具，保留 shell=True 兼容 Windows 路径空格。
+- 显式传递 -an / -gn。
+
+5. 修改 core/adapter_runner.py
+- 使用统一命令构造工具。
+- 保留旧的正向拆分、反向拆分、合并、R1+R2 merge 流程。
+
+6. 修改 gui/main_window.py
+- 版本号更新为 0.1。
+- 导航命名调整为“拆分与质控 / CRISPResso2 / 运行工作台 / 结果可视化 / 环境与安装”。
+- CRISPResso2 前可选接入 fastp clean FASTQ。
+- 停止按钮支持终止 fastp。
+- 保存配置时真正回填当前 UI 参数。
+
+7. 修改 utils/env_checker.py
+- 继续检测 Conda、环境、AdapterRemoval、CRISPResso2、fastp、Python。
+- 新增 Python 包检测：customtkinter、matplotlib、numpy、pandas、openpyxl、windnd、CRISPResso2。
+
+三、验证
+========
+
+- 已运行：python -m compileall .\work\crispr_analysis_gui_v0.1
+- 结果：通过。
+
+四、后续建议
+============
+
+1. 下一轮应在真实 crispranalysis conda 环境中运行一次 GUI 启动测试。
+2. 用小型 FASTQ + barcode 表做 AdapterRemoval -> fastp -> CRISPResso2 完整烟测。
+3. 若需要 CRISPRessoBatch/Pooled/WGS/Compare，应新增独立“分析模式”页面，而不是混入 Core 流程。
