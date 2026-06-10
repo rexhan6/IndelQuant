@@ -41,6 +41,7 @@ import os
 import sys
 import time
 import subprocess
+import ctypes
 
 from gui.styles import COLORS, FONT_SUBTITLE, FONT_NORMAL, FONT_BUTTON, FONT_INPUT, FONT_COMBO, FONT_CHECK, FONT_HINT, toggle_theme, get_theme
 from gui.params_panel import AdapterRemovalPanel, CRISPRessoPanel
@@ -90,6 +91,7 @@ def _resource_path(relative_path):
 
 class MainWindow:
     def __init__(self):
+        self._set_windows_app_id()
         self.root = ctk.CTk()
         self._dnd_enabled = True
         
@@ -127,6 +129,17 @@ class MainWindow:
 
         # Close event.
         self.root.protocol('WM_DELETE_WINDOW', self._on_close)
+
+    def _set_windows_app_id(self):
+        """Set a Windows AppUserModelID so run.bat uses the application icon."""
+        if sys.platform != 'win32':
+            return
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                f'rexhancx.{APP_NAME}.{VERSION}'
+            )
+        except Exception:
+            log.debug('Failed to set Windows AppUserModelID', exc_info=True)
 
     def _build_menubar(self):
         """Build the menu bar."""
@@ -166,11 +179,14 @@ class MainWindow:
 
     def _set_window_icon(self):
         """Set the application window icon when the icon resource is available."""
-        icon_path = _resource_path(os.path.join('assets', 'IndelQuant.ico'))
-        if not os.path.exists(icon_path):
-            return
+        png_path = _resource_path(os.path.join('assets', 'IndelQuant.png'))
+        ico_path = _resource_path(os.path.join('assets', 'IndelQuant.ico'))
         try:
-            self.root.iconbitmap(icon_path)
+            if os.path.exists(png_path):
+                self._window_icon_image = tk.PhotoImage(file=png_path)
+                self.root.iconphoto(True, self._window_icon_image)
+            if os.path.exists(ico_path):
+                self.root.iconbitmap(ico_path)
         except Exception:
             log.debug('Failed to set window icon', exc_info=True)
 
