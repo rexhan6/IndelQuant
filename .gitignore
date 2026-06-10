@@ -7,7 +7,6 @@ __pycache__/
 config.json
 logs/
 results/
-sampledata/
 DEVELOPMENT_LOG.md
 
 # Build and packaging outputs
