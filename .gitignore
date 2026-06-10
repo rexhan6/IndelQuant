@@ -12,6 +12,7 @@ DEVELOPMENT_LOG.md
 # Build and packaging outputs
 build/
 *.spec
+*.exe
 
 # Local editor and OS files
 .idea/
