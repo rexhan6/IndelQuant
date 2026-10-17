@@ -121,13 +121,13 @@ Typical output files include:
 
 ## Citation
 
-If you use IndelQuant in a publication, cite this software repository and the upstream tools used in your workflow.
+If you use IndelQuant in a publication, please cite this article and software repository.
+
+Duan, Y.; Xu, K.; Zhou, H.; He, C.; Ding, J.; Qin, C.; Zhang, Y.; Han, C.; Meng, H. IndelQuant: A Workflow for Cost-Efficient Amplicon Sequencing Analysis of Genome-Edited Chickens. Int. J. Mol. Sci. 2026, 27, 9054. https://doi.org/10.3390/ijms27209054
 
 Please cite CRISPResso2 according to the official CRISPResso2 documentation and publication information.
 
-Please cite AdapterRemoval v3 as recommended by the AdapterRemoval project. At the time of writing, AdapterRemoval v3 asks users to cite AdapterRemoval v2:
-
-Schubert, M., Lindgreen, S., and Orlando, L. AdapterRemoval v2: rapid adapter trimming, identification, and read merging. BMC Research Notes 9, 88 (2016). https://doi.org/10.1186/s13104-016-1900-2
+Please cite AdapterRemoval v3 as recommended by the AdapterRemoval project. 
 
 If fastp is used, cite the fastp publication recommended by the fastp project.
 
